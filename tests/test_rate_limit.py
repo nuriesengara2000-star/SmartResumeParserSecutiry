@@ -10,6 +10,7 @@ os.environ.setdefault("HF_TOKEN", "hf_test_token_for_ci")
 
 from app.inference import inference_engine
 from app.main import app
+
 MOCK_RESULT = {
     "response": '{"name": "Test"}',
     "model": "Qwen/Qwen2.5-7B-Instruct",
