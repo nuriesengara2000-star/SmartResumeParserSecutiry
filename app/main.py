@@ -1,5 +1,6 @@
 """Точка входа FastAPI-приложения GenAI API."""
 
+import json
 import logging
 import os
 import signal
@@ -9,7 +10,7 @@ from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -124,7 +125,6 @@ async def health() -> HealthResponse:
 @rate_limit_decorator("10/minute")
 async def generate(request: Request, body: GenerateRequest) -> GenerateResponse:
     """Принимает промпт и возвращает сгенерированный текст."""
-    # Проверка на prompt injection
     check_prompt_injection(body.prompt)
 
     if not inference_engine.is_loaded:
@@ -147,6 +147,47 @@ async def generate(request: Request, body: GenerateRequest) -> GenerateResponse:
         response=result["response"],
         model=result["model"],
         tokens_used=result["tokens_used"],
+    )
+
+
+@app.post(
+    "/generate/stream",
+    summary="Стриминговая генерация текста (SSE)",
+    responses={
+        400: {"model": ErrorResponse, "description": "Подозрительный промпт"},
+        422: {"description": "Невалидные входные данные"},
+        429: {"model": ErrorResponse, "description": "Превышен лимит запросов"},
+        500: {"model": ErrorResponse, "description": "Внутренняя ошибка сервера"},
+    },
+)
+@rate_limit_decorator("10/minute")
+async def generate_stream(request: Request, body: GenerateRequest):
+    """Стриминговая генерация — отдаёт токены по мере генерации (Server-Sent Events)."""
+    check_prompt_injection(body.prompt)
+
+    if not inference_engine.is_loaded:
+        raise HTTPException(status_code=500, detail="Модель не загружена")
+
+    async def event_generator():
+        try:
+            async for token in inference_engine.generate_stream(
+                prompt=body.prompt,
+                max_tokens=body.max_tokens,
+            ):
+                yield f"data: {json.dumps({'token': token})}\n\n"
+        except Exception as exc:
+            logger.exception("Ошибка стриминга: %s", exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 
