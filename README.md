@@ -5,7 +5,9 @@
 End-to-end ИИ-приложение: дообученная LLM (Qwen2.5-7B), обёрнутая в FastAPI с механизмами безопасности, задеплоенная на Railway, с React/Next.js фронтендом на Vercel.
 
 🔗 **Backend:** https://smartresumeparsersecutiry-production.up.railway.app  
+
 🔗 **Frontend:** https://smart-resume-parser-secutiry.vercel.app
+
 🔗 **DEMO-видео:** https://youtu.be/CmOZiUdKdqM
 
 ---
