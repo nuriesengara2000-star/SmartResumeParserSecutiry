@@ -8,8 +8,8 @@ from httpx import ASGITransport, AsyncClient
 
 os.environ.setdefault("HF_TOKEN", "hf_test_token_for_ci")
 
-from app.main import app
 from app.inference import inference_engine
+from app.main import app
 
 MOCK_RESULT = {
     "response": '{"name": "John Doe"}',
