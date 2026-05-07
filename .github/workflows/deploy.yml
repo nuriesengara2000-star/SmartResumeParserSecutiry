@@ -40,10 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: bervProject/railway-deploy@main
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: ${{ secrets.RAILWAY_SERVICE }}
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      - name: Deploy to Railway
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
   smoke-test:
     needs: deploy
@@ -61,4 +63,4 @@ jobs:
           echo "Health check passed!"
       - name: Check root endpoint
         run: |
-          curl -s ${{ secrets.DEPLOY_URL }}/ | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'service' in d; print('Root OK:', d)"
+          curl -s ${{ secrets.DEPLOY_URL }}/info | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'service' in d; print('Root OK:', d)"
