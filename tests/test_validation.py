@@ -4,12 +4,11 @@ import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 
 os.environ.setdefault("HF_TOKEN", "hf_test_token_for_ci")
 
-from app.inference import inference_engine
-from app.main import app
+from app.inference import inference_engine  # noqa: E402
 
 MOCK_RESULT = {
     "response": '{"name": "John Doe"}',
@@ -18,28 +17,23 @@ MOCK_RESULT = {
 }
 
 
-@pytest.fixture
-def anyio_backend():
-    return "asyncio"
-
-
-@pytest.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
-
 @pytest.mark.anyio
 async def test_generate_valid(client: AsyncClient) -> None:
     """Успешный запрос с корректными данными → 200."""
     inference_engine._loaded = True
     with patch.object(
-    inference_engine, "generate", new_callable=AsyncMock, return_value=MOCK_RESULT
-):
+        inference_engine,
+        "generate",
+        new_callable=AsyncMock,
+        return_value=MOCK_RESULT,
+    ):
         response = await client.post(
             "/generate",
-            json={"prompt": "John Doe, Software Engineer", "max_tokens": 256, "temperature": 0.7},
+            json={
+                "prompt": "John Doe, Software Engineer",
+                "max_tokens": 256,
+                "temperature": 0.7,
+            },
         )
         assert response.status_code == 200
         data = response.json()

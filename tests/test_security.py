@@ -3,23 +3,9 @@
 import os
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 
 os.environ.setdefault("HF_TOKEN", "hf_test_token_for_ci")
-
-from app.main import app
-
-
-@pytest.fixture
-def anyio_backend():
-    return "asyncio"
-
-
-@pytest.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
 
 
 @pytest.mark.anyio
@@ -76,7 +62,6 @@ async def test_injection_jailbreak(client: AsyncClient) -> None:
 @pytest.mark.anyio
 async def test_clean_prompt_passes(client: AsyncClient) -> None:
     """Обычный промпт проходит проверку безопасности (не блокируется)."""
-    # Не проверяем 200 — только что не 400
     response = await client.post(
         "/generate",
         json={"prompt": "John Doe, Software Engineer at Google"},
