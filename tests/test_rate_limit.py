@@ -33,7 +33,9 @@ async def client():
 async def test_rate_limit_exceeded(client: AsyncClient) -> None:
     """Превышение лимита запросов → 429."""
     inference_engine._loaded = True
-    with patch.object(inference_engine, "generate", new_callable=AsyncMock, return_value=MOCK_RESULT):
+    with patch.object(
+    inference_engine, "generate", new_callable=AsyncMock, return_value=MOCK_RESULT
+):
         # Отправляем 11 запросов — лимит 10/мин
         for i in range(11):
             response = await client.post(

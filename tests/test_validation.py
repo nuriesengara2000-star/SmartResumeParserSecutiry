@@ -34,7 +34,9 @@ async def client():
 async def test_generate_valid(client: AsyncClient) -> None:
     """Успешный запрос с корректными данными → 200."""
     inference_engine._loaded = True
-    with patch.object(inference_engine, "generate", new_callable=AsyncMock, return_value=MOCK_RESULT):
+    with patch.object(
+    inference_engine, "generate", new_callable=AsyncMock, return_value=MOCK_RESULT
+):
         response = await client.post(
             "/generate",
             json={"prompt": "John Doe, Software Engineer", "max_tokens": 256, "temperature": 0.7},

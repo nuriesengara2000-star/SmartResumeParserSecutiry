@@ -2,6 +2,7 @@
 import os
 from functools import wraps
 from typing import Any, Callable
+
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 # Лимитер по IP-адресу клиента с in-memory хранилищем
@@ -28,3 +29,4 @@ def rate_limit_decorator(limit_string: str) -> Callable:
     else:
         # Настоящий rate limiter
         return limiter.limit(limit_string)
+    
